@@ -12,6 +12,13 @@ class Vertex{
     }
 };
 
+class Face{
+    constructor(faces, color) {
+        this.faces = faces;
+        this.color = color;
+    }
+}
+
 var Vertex2D = function(x, y) {
     this.x = parseFloat(x);
     this.y = parseFloat(y);
@@ -35,6 +42,29 @@ class Cube{
         });
     }
 
+    rotate(theta, phi) {
+        this.vertices.forEach(elem => {
+            this.rotateVertex(elem, theta, phi);
+        });
+    }
+
+    rotateVertex(vertex, theta, phi) {
+        // Rotation matrix coefficients
+        var ct = Math.cos(theta);
+        var st = Math.sin(theta);
+        var cp = Math.cos(phi);
+        var sp = Math.sin(phi);
+
+        // Rotation
+        var x = vertex.x - this.center.x;
+        var y = vertex.y - this.center.y;
+        var z = vertex.z - this.center.z;
+
+        vertex.x = ct * x - st * cp * y + st * sp * z + this.center.x;
+        vertex.y = st * x + ct * cp * y - ct * sp * z + this.center.y;
+        vertex.z = sp * y + cp * z + this.center.z;
+    }
+
     genData() {
         this.vertices = [
             new Vertex(this.center.x - this.d, this.center.y - this.d, this.center.z + this.d),
@@ -49,12 +79,12 @@ class Cube{
 
         // Generate the faces
         this.faces = [
-            [this.vertices[0], this.vertices[1], this.vertices[2], this.vertices[3]],
-            [this.vertices[3], this.vertices[2], this.vertices[5], this.vertices[4]],
-            [this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]],
-            [this.vertices[7], this.vertices[6], this.vertices[1], this.vertices[0]],
-            [this.vertices[7], this.vertices[0], this.vertices[3], this.vertices[4]],
-            [this.vertices[1], this.vertices[6], this.vertices[5], this.vertices[2]]
+            new Face([this.vertices[0], this.vertices[1], this.vertices[2], this.vertices[3]], "rgba(255, 0, 0, 0.3)"),
+            new Face([this.vertices[3], this.vertices[2], this.vertices[5], this.vertices[4]], "rgba(0, 255, 0, 0.3)"),
+            new Face([this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]], "rgba(0, 0, 255, 0.3)"),
+            new Face([this.vertices[7], this.vertices[6], this.vertices[1], this.vertices[0]], "rgba(255, 255, 0, 0.3)"),
+            new Face([this.vertices[7], this.vertices[0], this.vertices[3], this.vertices[4]], "rgba(0, 255, 255, 0.3)"),
+            new Face([this.vertices[1], this.vertices[6], this.vertices[5], this.vertices[2]], "rgba(255, 0, 255, 0.3)"),
         ];
     }
 
@@ -77,10 +107,13 @@ function render(objects, ctx, dx, dy) {
         // For each face
         for (var j = 0, n_faces = objects[i].faces.length; j < n_faces; ++j) {
             // Current face
-            var face = objects[i].faces[j];
+            var faceClass = objects[i].faces[j];
+            var face = faceClass.faces;
+            var color = faceClass.color;
 
             // Draw the first vertex
             var P = project(face[0]);
+            ctx.fillStyle = color;
             ctx.beginPath();
             ctx.moveTo(P.x + dx, -P.y + dy);
 
@@ -128,24 +161,6 @@ function render(objects, ctx, dx, dy) {
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', stopMove);
 
-    // Rotate a vertice
-    function rotate(M, center, theta, phi) {
-        // Rotation matrix coefficients
-        var ct = Math.cos(theta);
-        var st = Math.sin(theta);
-        var cp = Math.cos(phi);
-        var sp = Math.sin(phi);
-
-        // Rotation
-        var x = M.x - center.x;
-        var y = M.y - center.y;
-        var z = M.z - center.z;
-
-        M.x = ct * x - st * cp * y + st * sp * z + center.x;
-        M.y = st * x + ct * cp * y - ct * sp * z + center.y;
-        M.z = sp * y + cp * z + center.z;
-    }
-
     // Initialize the movement
     function initMove(evt) {
         clearTimeout(autorotate_timeout);
@@ -159,8 +174,7 @@ function render(objects, ctx, dx, dy) {
             var theta = (evt.clientX - mx) * Math.PI / 360;
             var phi = (evt.clientY - my) * Math.PI / 180;
 
-            for (var i = 0; i < 8; ++i)
-                rotate(objects[0].vertices[i], objects[0].center, theta, phi);
+            objects[0].rotate(theta, phi);
 
             mx = evt.clientX;
             my = evt.clientY;
@@ -175,9 +189,7 @@ function render(objects, ctx, dx, dy) {
     }
 
     function autorotate() {
-        for (var i = 0; i < 8; ++i)
-            //rotate(objects[0].vertices[i], objects[0].center, -Math.PI / 720, Math.PI / 720);
-
+        objects[0].rotate(-Math.PI / 720, Math.PI / 720);
         objects[0].moveTo(objects[0].center.x + Math.sin(objects[0].center.x + 1), 0, 0);
 
         render(objects, ctx, dx, dy);
