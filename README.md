@@ -1,2 +1,0 @@
-# ProjectOmega
-A secret
