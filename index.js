@@ -1,7 +1,15 @@
-var Vertex = function(x, y, z) {
-    this.x = parseFloat(x);
-    this.y = parseFloat(y);
-    this.z = parseFloat(z);
+class Vertex{
+    constructor(x, y, z) {
+        this.x = parseFloat(x);
+        this.y = parseFloat(y);
+        this.z = parseFloat(z);
+    }
+
+    add(vertex){
+        this.x += vertex.x;
+        this.y += vertex.y;
+        this.z += vertex.z;
+    }
 };
 
 var Vertex2D = function(x, y) {
@@ -9,36 +17,53 @@ var Vertex2D = function(x, y) {
     this.y = parseFloat(y);
 };
 
-var Cube = function(center, side) {
-    // Generate the vertices
-    var d = side / 2;
+class Cube{
+    constructor(center, side) {
+        // Generate the vertices
+        this.d = side / 2;
+        this.center = center;
 
-    this.vertices = [
-        new Vertex(center.x - d, center.y - d, center.z + d),
-        new Vertex(center.x - d, center.y - d, center.z - d),
-        new Vertex(center.x + d, center.y - d, center.z - d),
-        new Vertex(center.x + d, center.y - d, center.z + d),
-        new Vertex(center.x + d, center.y + d, center.z + d),
-        new Vertex(center.x + d, center.y + d, center.z - d),
-        new Vertex(center.x - d, center.y + d, center.z - d),
-        new Vertex(center.x - d, center.y + d, center.z + d)
-    ];
+        this.genData();
+    }
 
-    // Generate the faces
-    this.faces = [
-        [this.vertices[0], this.vertices[1], this.vertices[2], this.vertices[3]],
-        [this.vertices[3], this.vertices[2], this.vertices[5], this.vertices[4]],
-        [this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]],
-        [this.vertices[7], this.vertices[6], this.vertices[1], this.vertices[0]],
-        [this.vertices[7], this.vertices[0], this.vertices[3], this.vertices[4]],
-        [this.vertices[1], this.vertices[6], this.vertices[5], this.vertices[2]]
-    ];
+    moveTo(x, y, z) {
+        this.center = new Vertex(x, y, z);
+        this.vertices.forEach(elem => {
+            elem.x += x;
+            elem.y += y;
+            elem.z += z;
+        });
+    }
+
+    genData() {
+        this.vertices = [
+            new Vertex(this.center.x - this.d, this.center.y - this.d, this.center.z + this.d),
+            new Vertex(this.center.x - this.d, this.center.y - this.d, this.center.z - this.d),
+            new Vertex(this.center.x + this.d, this.center.y - this.d, this.center.z - this.d),
+            new Vertex(this.center.x + this.d, this.center.y - this.d, this.center.z + this.d),
+            new Vertex(this.center.x + this.d, this.center.y + this.d, this.center.z + this.d),
+            new Vertex(this.center.x + this.d, this.center.y + this.d, this.center.z - this.d),
+            new Vertex(this.center.x - this.d, this.center.y + this.d, this.center.z - this.d),
+            new Vertex(this.center.x - this.d, this.center.y + this.d, this.center.z + this.d)
+        ];
+
+        // Generate the faces
+        this.faces = [
+            [this.vertices[0], this.vertices[1], this.vertices[2], this.vertices[3]],
+            [this.vertices[3], this.vertices[2], this.vertices[5], this.vertices[4]],
+            [this.vertices[4], this.vertices[5], this.vertices[6], this.vertices[7]],
+            [this.vertices[7], this.vertices[6], this.vertices[1], this.vertices[0]],
+            [this.vertices[7], this.vertices[0], this.vertices[3], this.vertices[4]],
+            [this.vertices[1], this.vertices[6], this.vertices[5], this.vertices[2]]
+        ];
+    }
+
 };
 
 function project(M) {
     // Distance between the camera and the plane
-    var d = 200;
-    var r = d / M.y;
+    var d = 1000;
+    var r = d / (M.y + d);
 
     return new Vertex2D(r * M.x, r * M.z);
 }
@@ -135,7 +160,7 @@ function render(objects, ctx, dx, dy) {
             var phi = (evt.clientY - my) * Math.PI / 180;
 
             for (var i = 0; i < 8; ++i)
-                rotate(cube.vertices[i], cube_center, theta, phi);
+                rotate(objects[0].vertices[i], objects[0].center, theta, phi);
 
             mx = evt.clientX;
             my = evt.clientY;
@@ -151,7 +176,9 @@ function render(objects, ctx, dx, dy) {
 
     function autorotate() {
         for (var i = 0; i < 8; ++i)
-            rotate(cube.vertices[i], cube_center, -Math.PI / 720, Math.PI / 720);
+            //rotate(objects[0].vertices[i], objects[0].center, -Math.PI / 720, Math.PI / 720);
+
+        objects[0].moveTo(objects[0].center.x + Math.sin(objects[0].center.x + 1), 0, 0);
 
         render(objects, ctx, dx, dy);
 
